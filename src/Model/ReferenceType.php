@@ -26,4 +26,5 @@ class ReferenceType extends AbstractEnum
     const VIDEO = 'video';
     const MEDIA = 'media';
     const APPLICATION = 'application';
+    const EVENT = 'event';
 }

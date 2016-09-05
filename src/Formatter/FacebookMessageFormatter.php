@@ -40,8 +40,12 @@ class FacebookMessageFormatter extends AbstractMessageFormatter
         case ReferenceType::USER:
             return $this->createLinkString('https://www.facebook.com/'.$data['id'], $messagePart['text']);
             break;
+        case ReferenceType::EVENT:
+            return $this->createLinkString('https://www.facebook.com/events/'.$data['id'], $messagePart['text']);
+            break;
         default:
-            return;
+            // Display raw text if no formatter is found.
+            return $messagePart['text'];
             break;
         }
     }
