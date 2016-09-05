@@ -84,6 +84,7 @@ class TwitterApiClient extends AbstractClient implements ClientInterface
         $middleware = new Oauth1([
             'consumer_key'    => $consumerKey,
             'consumer_secret' => $consumerSecret,
+            'token_secret'    => '',
         ]);
 
         $stack->push($middleware);
