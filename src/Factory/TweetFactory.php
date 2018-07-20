@@ -45,18 +45,41 @@ class TweetFactory implements PostFactoryInterface {
     $tweet
         ->setFollowersCount($data['user']['followers_count'])
         ->setIdentifier($data['id'])
-        ->setMessage($data['full_text'])
         ->setCreatedAt(new \DateTime($data['created_at']))
         ->setAuthor($author);
 
-    if (isset($data['retweeted_status']['full_text'])) {
-      $tweet->setMessage($data['retweeted_status']['full_text']);
+    // Use the correct message source.
+    $retweet = isset($data['retweeted_status']);
+
+    if ($retweet) {
+      $source_tweet = $retweet ? $data['retweeted_status'] : $data;
+      $extended = isset($source_tweet['full_text']);
+
+      if ($extended) {
+        $this->truncateTweetMessage($source_tweet['full_text'], $source_tweet['display_text_range']);
+        $tweet->setMessage($source_tweet['full_text']);
+        $this->addTweetReferences($tweet, $source_tweet, $source_tweet['display_text_range'][1]);
+      }
+      else {
+        $tweet->setMessage($source_tweet['text']);
+        $this->addTweetReferences($tweet, $source_tweet);
+      }
+
+      $this->addTweetMedias($tweet, $source_tweet);
     }
 
-    $this->addTweetReferences($tweet, $data);
-    $this->addTweetMedias($tweet, $data);
-
     return $tweet;
+  }
+
+  /**
+   * truncateTweetMessage.
+   *
+   * @param $message
+   * @param $display_text_range
+   */
+  protected function truncateTweetMessage(&$message, $display_text_range = NULL) {
+    $width = $display_text_range[1] - $display_text_range[0];
+    $message = mb_strimwidth($message, $display_text_range[0], $width);
   }
 
   /**
@@ -87,8 +110,9 @@ class TweetFactory implements PostFactoryInterface {
    *
    * @param $tweet
    * @param $data
+   * @param $tweet_display_limit
    */
-  protected function addTweetReferences(&$tweet, $data) {
+  protected function addTweetReferences(&$tweet, $data, $tweet_display_limit = FALSE) {
     $typeMap = array(
       'urls' => ReferenceType::URL,
       'user_mentions' => ReferenceType::USER,
@@ -101,6 +125,10 @@ class TweetFactory implements PostFactoryInterface {
 
     foreach ($data['entities'] as $entityType => $entities) {
       foreach ($entities as $entity) {
+        if ($tweet_display_limit && $entity['indices'][0] > $tweet_display_limit) {
+          break;
+        }
+
         $reference = new Reference();
         $reference
             ->setIndices($entity['indices'])
@@ -114,6 +142,10 @@ class TweetFactory implements PostFactoryInterface {
     if (isset($data['extended_entities'])) {
       foreach ($data['extended_entities'] as $entities) {
         foreach ($entities as $entity) {
+          if ($tweet_display_limit && $entity['indices'][0] > $tweet_display_limit) {
+            break;
+          }
+
           $reference = new Reference();
           $reference
               ->setIndices($entity['indices'])
