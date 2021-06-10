@@ -51,22 +51,20 @@ class TweetFactory implements PostFactoryInterface {
     // Use the correct message source.
     $retweet = isset($data['retweeted_status']);
 
-    if ($retweet) {
-      $source_tweet = $retweet ? $data['retweeted_status'] : $data;
-      $extended = isset($source_tweet['full_text']);
+    $source_tweet = $retweet ? $data['retweeted_status'] : $data;
+    $extended = isset($source_tweet['full_text']);
 
-      if ($extended) {
-        $this->truncateTweetMessage($source_tweet['full_text'], $source_tweet['display_text_range']);
-        $tweet->setMessage($source_tweet['full_text']);
-        $this->addTweetReferences($tweet, $source_tweet, $source_tweet['display_text_range'][1]);
-      }
-      else {
-        $tweet->setMessage($source_tweet['text']);
-        $this->addTweetReferences($tweet, $source_tweet);
-      }
-
-      $this->addTweetMedias($tweet, $source_tweet);
+    if ($extended) {
+      $this->truncateTweetMessage($source_tweet['full_text'], $source_tweet['display_text_range']);
+      $tweet->setMessage($source_tweet['full_text']);
+      $this->addTweetReferences($tweet, $source_tweet, $source_tweet['display_text_range'][1]);
     }
+    else {
+      $tweet->setMessage($source_tweet['text']);
+      $this->addTweetReferences($tweet, $source_tweet);
+    }
+
+    $this->addTweetMedias($tweet, $source_tweet);
 
     return $tweet;
   }
